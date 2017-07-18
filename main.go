@@ -494,6 +494,15 @@ INTERFACES AND METHODS:
 					 f(w, req)
 				 }
 
+				 // Make ArgServer into an HTTP server
+				 func ArgServer(w http.ResponseWriter, req *http.Request) {
+					 fmt.Fprintln(w, os.Args)
+				 }
+
+				 // ArgServe now has the same signature as HandlerFunc so it can be converted
+				 // to that type to access its methods.
+				 http.Handle("/args", http.HandlerFunc(ArgServer))
+
 */
 
 func main() {
