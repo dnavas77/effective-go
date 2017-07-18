@@ -416,6 +416,86 @@ METHODS: Pointers vs. Values
 			4.
 */
 
+/*
+INTERFACES and OTHER TYPES:
+			1. A type can implement multiple interfaces
+			2. Example:
+
+				 type Sequence []int
+				 // Methods required by sort.Interface
+				 func (s Sequence) Len() int {
+					 return len(s)
+				 }
+				 func (s Sequence) Less(i, j int) bool {
+					 return s[i] < s[j]
+				 }
+				 func (s Sequence) Swap(i, j int) {
+					 s[i], s[j] = s[j], s[i]
+				 }
+
+				 // Method for printing - sorts the elements before printing
+				 func (s Sequence) String() string {
+					 sort.Sort(s)
+					 return fmt.Sprint([]int(s)) // <-- []int(s): converts named type to plain slice
+				 }
+
+CONVERSIONS:
+			1. It's an idiom in Go programs to convert the type of an expression to access a different
+				 set of methods.
+
+INTERFACE CONVERSIONS and TYPE ASSERTIONS:
+			1. e.g.:
+				 if str, ok := value.(string); ok {
+					 return str
+				 } else if str, ok := value.(Stringer); ok {
+					 return str.String()
+				 }
+
+GENERALITY:
+			1. If a type exists only to implement an interface and will never have exported methods
+				 beyond that interface, there is no need to export the type itself. In such cases
+				 the constructor (implementation) should return an interface value rather than the implementing type.
+
+INTERFACES AND METHODS:
+			1. Implementation of a handler to count the number of times a page is visited.
+				 // Simple counter server
+				 type Counter struct {
+					 n int
+				 }
+
+				 func (ctr *Counter) ServerHTTP(w http.ResponseWriter, req *http.Request) {
+					 ctr.n++
+					 fmt.Fprintf(w, "counter = %d\n", ctr.n)
+				 }
+			2. what if your program has some internal state that needs to be notified that a page
+				 has been visited? Tie a channel to the web page. e.g.:
+				 // A channel tht sends a notification on each visit.
+				 // (Probably want the channel to be buffered.)
+				 type Chan chan *http.Request
+
+				 func (ch Chan) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+					 ch <- req
+					 fmt.Fprint(w, "notification sent")
+				 }
+
+				 // Print the server args
+				 fun ArgServer() {
+					 fmt.Println(os.Args)
+				 }
+
+				 // The HandlerFunc type is an adapter to allow the use of
+				 // ordinary functions as HTTP handlers. If f is a function
+				 // with the appropriate signature, HandlerFunc(f) is a
+				 // Handler object that calls f.
+				 type HandlerFunc func(ResponseWriter, *Request)
+
+				 // ServeHTTP calls f(w, req)
+				 func (f HandlerFunc) ServeHTTP(w ResponseWriter, req *Request) {
+					 f(w, req)
+				 }
+
+*/
+
 func main() {
 	fmt.Println("Effective Go")
 }
