@@ -483,7 +483,7 @@ UNUSED IMPORTS and VARIABLES:
 							"io"
 						)
 					var _ = fmt.Printf // for debugging; delete when done
-						var _ io.Reader // for debugging; delete when done
+					var _ io.Reader // for debugging; delete when done
 
 				4. global declarations to silence import errors should come right after
 					the imports and be commented to remind yourself to clean things up later
@@ -492,7 +492,91 @@ IMPORT FOR SIDE EFFECT:
 				1. sometimes its good to import a package only for its side effects without
 					 any explicit use. For example, during its "init" function.
 				2. the "net/http/pprof" package registers HTTP handlers that provide debugging
-				   information.
+					 information.
+				3. to import a pakage only for its side effects, rename the package to the blank
+					 identifier:
+							 import _ "net/http/pprof"
+				4. if you import it with a name the compiler would reject the program
+					 becuase named imports need to be used.
+
+INTERFACE CHECKS:
+				1. most interface conversions are static and therefore checked at compile time.
+				2. some interface checks do happen at run-time. e.g.: in the "encoding/json"
+					 package, which defineds a "Marshaler" interface.
+					 When the JSON encoder receives a value that implements that interface,
+					 the encoder invokes the value marshaling method to convert it to JSON
+					 instead of doing standard conversion. The encoder checks this property
+					 at runtime with a type assertion like:
+				 			m, ok := val.(json.Marshaler)
+				3. to ask whether a type implements an interface, use the blank identifier to
+					 ignore the value:
+				 			if _, ok := val.(json.Marshaler); ok {
+								 //...
+							}
+				4. sometimes is a good idea to check if a type implements an interface
+							var _ json.Marshaler = (*RawMessage)(nil)
+									// - the assignment requires that *RawMessage implements Marshaler,
+									// which will be checked at compile time.
+									- The appearance of the blank identifier indicates that the declaration
+										exists only for the type checking.
+				5. Do not do this for every type that satisfies an interface, though.
+				6. this declarations are only used when there are no static conversions already
+				   present in the code (which is rare).
+
+EMBEDDING:
+				1. Go does not have subclassing. but has ability to "borrow" pieces of an implementation
+					 by embedding types within a struct or interface.
+				2. Interface embedding:
+								type Reader interface {
+									Read(p []byte) (n int, err error)
+								}
+								type Writer interface {
+									Write(p []byte) (n int, err error)
+								}
+				3. io package exports interfaces that implement several methods.
+					 We could list both Read/Write methods but embedding interfaces is easier and
+					 more evocative.
+				     // ReadWriter is the interface that combines the Reader and Writer interfaces
+						 type ReadWriter interface {
+							 Reader
+							 Writer
+						 }
+
+				4. only interfaces can be embedded within interfaces.
+				5. the same idea with structs but far more reaching implications:
+						A:
+								// ReadWriter stores pointers to a Reader and a Writer struct
+								// It implements io.ReadWriter
+								type ReadWriter struct {
+									*Reader // *bufio.Reader
+									*Writer // *bufio.Writer
+								}
+								// the embedded elements are pointers and must be initialized to
+								// valid structs before used.
+
+								// Could be rewritten as:
+								// but to promote the methods of the fields and satisfy io interfaces
+								// we would also need to provide forwarding methods.
+								// By embedding the structs directly, we avoid this bookkeeping.
+								type ReadWriter struct {
+									reader *Reader
+									writer *Writer
+								}
+
+						B:
+								The methods of embedded types come along for free. which means that
+								bufio.ReadWriter not only has methods of bufio.Reader and bufio.Writer
+								it also satisfies all three interfaces: io.Reader, io.Writer, and io.ReadWriter
+
+						C:
+								Difference between "embedding" and "subclassing":
+									- when we embed a type, the methods of that type become methods of teh outer type.
+									- when those methods are invoked, the receiver of the method is the inner type
+										no the outer one. e.g.: when the "Read" method of a "bufio.ReadWriter" is invoked
+										is has exactly the same effect as the forwarding method approach; the receiver
+										is the "reader" field of the "ReadWriter", not the "ReadWriter" itself.
+
+
 
 func main() {
 	fmt.Println("Effective Go")
