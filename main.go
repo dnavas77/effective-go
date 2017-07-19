@@ -590,6 +590,22 @@ EMBEDDING:
 												}
 												// or with a composite literal
 												job := &Job{command, log.New(os.Stderr, "Job: ", log.Ldate)}
+						E:
+								Embedding types introduces the problem of name conflicts, but the rules
+								to resolve them are simple:
+											1. a field or method x hides any other item x in a more deeply nested part
+											of the type. If "log.Logger" contained a field or method named "command"
+											the "command" field of Job would dominate it.
+											2. if the name apears at the same nesting level, its usually an error.
+											itd be erronous to embed "log.Logger" if the struct had another field or
+											method named "Logger".
+											3. however, if the duplicate name is never mentioned in the program outside the
+											type definition is OK.
+											4. theres no problem if a field added that conflicts with another field if neither
+											field is ever used.
+
+CONCURRENCY:
+						1.
 
 func main() {
 	fmt.Println("Effective Go")
