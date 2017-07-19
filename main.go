@@ -576,7 +576,20 @@ EMBEDDING:
 										is has exactly the same effect as the forwarding method approach; the receiver
 										is the "reader" field of the "ReadWriter", not the "ReadWriter" itself.
 
-
+						D:
+								Embedding can also be a simple convenience.
+								// Job has now "Log", "Logf" and other methods of *log.Logger
+								type Job struct {
+									Command string
+									*log.Logger
+								}
+									- "Logger" is a regular field of the Job struct. we can initialize it in the usual way
+										inside the constructor for Job. e.g.:
+												func NewJob(command string, logger *log.Logger) *Job {
+													return &Job{command, logger}
+												}
+												// or with a composite literal
+												job := &Job{command, log.New(os.Stderr, "Job: ", log.Ldate)}
 
 func main() {
 	fmt.Println("Effective Go")
