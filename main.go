@@ -4,13 +4,11 @@ import (
 	"fmt"
 )
 
-// FORMATTING: automatically done by gofmt tool
 type T struct {
 	name  string // name of the object
 	value int    // its value
 }
 
-/*
 COMMENTARY:
 	1. Every package should have a package comment:
 		Package regexp implements a simple library for regular expressions.
@@ -52,7 +50,6 @@ COMMENTARY:
 		)
 */
 
-/*
 NAMING CONVENTIONS:
 	1. Package names are lowercase, single-word names; no underscores or mixedCaps
 
@@ -67,8 +64,8 @@ NAMING CONVENTIONS:
 
 	4. Prefer "ring.New" instead of "ring.Ring"
 
-	5. "Long names don't automatically make things more readable. A helpful doc comment
-	can often be more valuable than an extra long name."
+	5. Long names don't automatically make things more readable. A helpful doc comment
+	can often be more valuable than an extra long name.
 
 	6. Getters: given a variable "owner" don't do "GetOwner". Prefer "Ownner" and for
 	setters, prefer "SetOwner"
@@ -93,9 +90,7 @@ NAMING CONVENTIONS:
 
 	9. Control Structures: Go does not have "do" or "while".
 	   Always have if statements return so there's no need for "else"
-*/
 
-/*
 REDECLARATION and REASSIGNMENT
 
 	1. e.g:
@@ -167,18 +162,14 @@ REDECLARATION and REASSIGNMENT
 		default:
 			fmt.Printf("unexpected type %T\n", t)
 		}
-*/
 
-/*
 FUNCTIONS:
 
 	1. Multiple return values: func nextInt(b []byte, i int) (int, int) {...
 	2. Named result params: funct nextInt(b []byte, i int) (value, nextPos int) {...
-	3. Go's "defer" statement schedules a function call (the deferred function) to be run
+	3. Go "defer" statement schedules a function call (the deferred function) to be run
 	   immediately before the function executing the "defer" function returns.
-*/
 
-/*
 DATA:
 
 	1. "new": a built-in function that allocates memory, but unlike its namesakes in some
@@ -190,9 +181,7 @@ DATA:
 		}
 		p := new(SyncedBuffer) // type *SyncedBuffer
 		var v SyncedBuffer	   // type SyncedBuffer
-*/
 
-/*
 CONSTRUCTORS and COMPOSITE LITERALS:
 
     1. Sometimes the zero value isn't good enough and and initializing constructor
@@ -206,9 +195,7 @@ CONSTRUCTORS and COMPOSITE LITERALS:
 				return &File{fd, name, nil, 0
 			}
 	2. The expressions "new(File)" and "&File{}" are equivalent
-*/
 
-/*
 ALLOCATION with "make":
 	1. Creates slices, channels, and maps only. And returns an initialized (not zeroed) value of type T (not *T)
 	2. new([]int) returns a pointer to a newly allocated zeroed slice structure, that is a pointer to a nil slice.
@@ -226,16 +213,12 @@ ALLOCATION with "make":
 		// three dots tell the compiler to make an array instead of a slice.
 		// by first counting the number of elements in the braces.
 		m := [...]float64{7.0, 8.5, 9.1}
-*/
 
-/*
 ARRAYS:
 	1. Assignning one array to another copies all the elements
 	2. Passing an array to a function will receive a copy of the array, not a ponter
 	3. The size of the array is part of the type.
-*/
 
-/*
 SLICES:
 	1. Slices are passed by value but elements in slice can be modified.
 	2. Length of slices can change.
@@ -256,11 +239,9 @@ SLICES:
 		}
 		return slice
 	}
-*/
 
-/*
 TWO-DIMENSIONAL SLICES:
-	1. Sometimes it's necessary to allocate a 2D slice, for example when processing
+	1. Sometimes its necessary to allocate a 2D slice, for example when processing
 	   scan lines of pixels.
 
 	   // Allocate the top-level slice, the same as before
@@ -271,9 +252,7 @@ TWO-DIMENSIONAL SLICES:
 	   for i:= range picture {
 		   picture[i], pixels = pixels[:XSize], pixels[XSize:]
 	   }
-*/
 
-/*
 MAPS:
 	1. Holds a reference to an underlying data structure.
 	2. If you change the contents of a map in a function it'll be visible in the caller.
@@ -307,9 +286,7 @@ MAPS:
 	   and the key to be deleted.
 	   e.g.:
 			delete(timeZone, "PDT")
-*/
 
-/*
 PRINTING:
 	1. fmt.Printf, fmt.Fprintf, fmt.Sprintf (returns string)
 		example:
@@ -335,14 +312,10 @@ PRINTING:
 		func (m MyString) String() string {
 			return fmt.Sprintf("MyString=%s", string(m)) // Error: will recur forever.
 		}
-*/
 
-/*
 APPEND:
 	1. func append(slice []T, elements ...T) []T {...
-*/
 
-/*
 INITIALIZATION:
 	1. Is more powerful than in C. complex structures an be built during intialization.
 
@@ -365,18 +338,14 @@ INITIALIZATION:
 			)
 	4. Sprintf will only call the String method when it wants a string. %f is safe
 	   cause it wants a float.
-*/
 
-/*
 VARIABLES:
 	var (
 		home = os.Getenv("HOME")
 		user = os.Getenv("USER")
 		gopath = os.Getenv("GOPATH")
 	)
-*/
 
-/*
 THE INIT FUNCTION:
 	1. each source file can identify its own niladic init function to setup whatever
 	   state is required (each file can have multiple init function). init is called
@@ -396,10 +365,7 @@ THE INIT FUNCTION:
 			   gopath = home + "/go
 		   }
 	   }
-
-*/
-
-/*
+"
 METHODS: Pointers vs. Values
 		 1. methods can be defined for any named type (except pointer and interface)
 		 2. define methods on slices. e.g.:
@@ -414,9 +380,7 @@ METHODS: Pointers vs. Values
 			3. the rule about pointers vs values for receivers is taht value methods can be invoked on
 				 pointers and values, but pointer methods can only be invoked on pointers.
 			4.
-*/
 
-/*
 INTERFACES and OTHER TYPES:
 			1. A type can implement multiple interfaces
 			2. Example:
@@ -440,7 +404,7 @@ INTERFACES and OTHER TYPES:
 				 }
 
 CONVERSIONS:
-			1. It's an idiom in Go programs to convert the type of an expression to access a different
+			1. Its an idiom in Go programs to convert the type of an expression to access a different
 				 set of methods.
 
 INTERFACE CONVERSIONS and TYPE ASSERTIONS:
@@ -503,7 +467,6 @@ INTERFACES AND METHODS:
 				 // to that type to access its methods.
 				 http.Handle("/args", http.HandlerFunc(ArgServer))
 
-*/
 
 func main() {
 	fmt.Println("Effective Go")
