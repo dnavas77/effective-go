@@ -466,7 +466,33 @@ INTERFACES AND METHODS:
 				 // ArgServe now has the same signature as HandlerFunc so it can be converted
 				 // to that type to access its methods.
 				 http.Handle("/args", http.HandlerFunc(ArgServer))
+				 // HTTP server will invoke ServeHTTP with ArgServer as receiver
+				 // which then calls f(w, req) where f = ArgServer which will print the args:
+				 // fmt.Fprintln(w, os.Args)
 
+THE BLANK IDENTIFIER (_):
+				 1. acts as a placeholder empty null value
+				 2. do not use it for error values, always check error returns
+
+UNUSED IMPORTS and VARIABLES:
+				1. its an error to import a package without using it
+				2. unused imports create unneessary bloat
+				3. to silence complaints about unused imports use the blank identifier:
+					import (
+							"fmt"
+							"io"
+						)
+					var _ = fmt.Printf // for debugging; delete when done
+						var _ io.Reader // for debugging; delete when done
+
+				4. global declarations to silence import errors should come right after
+					the imports and be commented to remind yourself to clean things up later
+
+IMPORT FOR SIDE EFFECT:
+				1. sometimes its good to import a package only for its side effects without
+					 any explicit use. For example, during its "init" function.
+				2. the "net/http/pprof" package registers HTTP handlers that provide debugging
+				   information.
 
 func main() {
 	fmt.Println("Effective Go")
