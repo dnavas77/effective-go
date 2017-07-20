@@ -631,4 +631,35 @@ CHANNELS:
 	2. Unbuffered channels combine "communication" (exchange of a value) with "synchronization"
 		 guaranteeing that 2 calculations (goroutines) are in a known state.
 
-	3.
+	3. A channel can allow the launching goroutine to wait for the sort to complete.
+
+		 c := make(chan int) // Allocate a channel
+		 go func() { // Start the sort in a goroutine; when it completes, signal on the channel
+			 list.Sort()
+			 c <- 1 // Send a signal; value does not matter.
+		 }
+		 doSomethingForAWhile()
+		 <- c // Wait for sort to finish; discard sent value
+
+	4. Receivers always block until theres data to receive.
+		 - if channel is Unbuffered, sender blocks until the receiver has received the value
+		 - if channel has a buffer, sender blocks only until the value has been copied to
+			 the buffer; if the buffer is full, this means waiting until some receiver has
+			 retrieved a value.
+	5. A buffered channel can be used like a semaphore, for instance to limit throughput.
+		 - the capacity of the channel buffer limits the number of simultaneous calls to process.
+
+				 var sem = make(chan int, MaxOutstanding)
+
+				 func handle(r *Request) {
+					 sem <- 1 	// wait for active queue to drain.
+					 process(r) // May take a long time.
+					 <- sem			// Done; enable next request to run.
+				 }
+
+				 func Serve(queue chan *Request) {
+					 for {
+						 req := <- queue
+						 go handle(req) // Don't wait for handle to finish
+					 }
+				 }
