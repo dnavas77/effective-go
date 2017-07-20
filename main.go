@@ -668,14 +668,50 @@ CHANNELS:
 				}
 			}
 
-			- Another approach that manages resources well is to start a fixed number of "handle"
-				goroutines all reading from the request channel. The number of goroutines limits the
-				number of simultaneous calls to "process". This "Serve" function also accepts
-				a channel on which it will be told to exit; after launching the goroutines it blocks
-				receiving from that channel.
+		- Another approach that manages resources well is to start a fixed number of "handle"
+			goroutines all reading from the request channel. The number of goroutines limits the
+			number of simultaneous calls to "process". This "Serve" function also accepts
+			a channel on which it will be told to exit; after launching the goroutines it blocks
+			receiving from that channel.
 
-					func handle(queue chan *Request) {
-						for r := range queue {
-							process(r)
-						}
-					}
+			func handle(queue chan *Request) {
+				for r := range queue {
+					process(r)
+				}
+			}
+
+			func Serve(clientRequests chan *Request, quit chan bool) {
+				// Start handlers
+				for i := 0; i < MaxOutstanding; i++ {
+					go handle(clientRequests)
+				}
+				<- quit // Wait to be told to exit
+			}
+
+CHANNELS OF CHANNELS:
+	1. Channels are first class values so they can be passed around like any other value.
+
+	2. A common use of this property is to implement safe, parallel demultiplexing.
+
+	3.  In the example in the previous section, handle was an idealized handler for a request but we didnt define the type it was handling. If that type includes a channel on which to reply, each client can provide its own path for the answer. Heres a schematic definition of type Request.
+
+			type Request struct {
+				args 				[]int
+				f 					func([]int) int
+				resultChan	chan int
+			}
+
+			// The client provides a function and its arguments, as well as a channel inside the request
+			// object on qhich to receive the answer.
+			func sum(a []int) (s int) {
+				for _, v := range a {
+					s += v
+				}
+				return
+			}
+
+			request := &Request{[]int{3, 4, 5}, sum, make(chan int)}
+			// Send request
+			clientRequests <- request
+			// Wait for response.
+			fmt.Printf("answer: %d\n", <- request.resultChan)
