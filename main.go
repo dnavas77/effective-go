@@ -513,99 +513,126 @@ INTERFACE CHECKS:
 				 			if _, ok := val.(json.Marshaler); ok {
 								 //...
 							}
-				4. sometimes is a good idea to check if a type implements an interface
-							var _ json.Marshaler = (*RawMessage)(nil)
-									// - the assignment requires that *RawMessage implements Marshaler,
-									// which will be checked at compile time.
-									- The appearance of the blank identifier indicates that the declaration
-										exists only for the type checking.
-				5. Do not do this for every type that satisfies an interface, though.
-				6. this declarations are only used when there are no static conversions already
-				   present in the code (which is rare).
+			4. sometimes is a good idea to check if a type implements an interface
+						var _ json.Marshaler = (*RawMessage)(nil)
+								// - the assignment requires that *RawMessage implements Marshaler,
+								// which will be checked at compile time.
+								- The appearance of the blank identifier indicates that the declaration
+									exists only for the type checking.
+			5. Do not do this for every type that satisfies an interface, though.
+			6. this declarations are only used when there are no static conversions already
+					present in the code (which is rare).
 
 EMBEDDING:
-				1. Go does not have subclassing. but has ability to "borrow" pieces of an implementation
-					 by embedding types within a struct or interface.
-				2. Interface embedding:
-								type Reader interface {
-									Read(p []byte) (n int, err error)
-								}
-								type Writer interface {
-									Write(p []byte) (n int, err error)
-								}
-				3. io package exports interfaces that implement several methods.
-					 We could list both Read/Write methods but embedding interfaces is easier and
-					 more evocative.
-				     // ReadWriter is the interface that combines the Reader and Writer interfaces
-						 type ReadWriter interface {
-							 Reader
-							 Writer
-						 }
+			1. Go does not have subclassing. but has ability to "borrow" pieces of an implementation
+					by embedding types within a struct or interface.
+			2. Interface embedding:
+							type Reader interface {
+								Read(p []byte) (n int, err error)
+							}
+							type Writer interface {
+								Write(p []byte) (n int, err error)
+							}
+			3. io package exports interfaces that implement several methods.
+					We could list both Read/Write methods but embedding interfaces is easier and
+					more evocative.
+					// ReadWriter is the interface that combines the Reader and Writer interfaces
+						type ReadWriter interface {
+							Reader
+							Writer
+						}
 
-				4. only interfaces can be embedded within interfaces.
-				5. the same idea with structs but far more reaching implications:
-						A:
-								// ReadWriter stores pointers to a Reader and a Writer struct
-								// It implements io.ReadWriter
-								type ReadWriter struct {
-									*Reader // *bufio.Reader
-									*Writer // *bufio.Writer
-								}
-								// the embedded elements are pointers and must be initialized to
-								// valid structs before used.
+			4. only interfaces can be embedded within interfaces.
+			5. the same idea with structs but far more reaching implications:
+					A:
+							// ReadWriter stores pointers to a Reader and a Writer struct
+							// It implements io.ReadWriter
+							type ReadWriter struct {
+								*Reader // *bufio.Reader
+								*Writer // *bufio.Writer
+							}
+							// the embedded elements are pointers and must be initialized to
+							// valid structs before used.
 
-								// Could be rewritten as:
-								// but to promote the methods of the fields and satisfy io interfaces
-								// we would also need to provide forwarding methods.
-								// By embedding the structs directly, we avoid this bookkeeping.
-								type ReadWriter struct {
-									reader *Reader
-									writer *Writer
-								}
+							// Could be rewritten as:
+							// but to promote the methods of the fields and satisfy io interfaces
+							// we would also need to provide forwarding methods.
+							// By embedding the structs directly, we avoid this bookkeeping.
+							type ReadWriter struct {
+							reader *Reader
+								writer *Writer
+							}
 
-						B:
-								The methods of embedded types come along for free. which means that
-								bufio.ReadWriter not only has methods of bufio.Reader and bufio.Writer
-								it also satisfies all three interfaces: io.Reader, io.Writer, and io.ReadWriter
+					B:
+							The methods of embedded types come along for free. which means that
+							bufio.ReadWriter not only has methods of bufio.Reader and bufio.Writer
+							it also satisfies all three interfaces: io.Reader, io.Writer, and io.ReadWriter
 
-						C:
-								Difference between "embedding" and "subclassing":
-									- when we embed a type, the methods of that type become methods of teh outer type.
-									- when those methods are invoked, the receiver of the method is the inner type
-										no the outer one. e.g.: when the "Read" method of a "bufio.ReadWriter" is invoked
-										is has exactly the same effect as the forwarding method approach; the receiver
-										is the "reader" field of the "ReadWriter", not the "ReadWriter" itself.
+					C:
+							Difference between "embedding" and "subclassing":
+								- when we embed a type, the methods of that type become methods of teh outer type.
+								- when those methods are invoked, the receiver of the method is the inner type
+									no the outer one. e.g.: when the "Read" method of a "bufio.ReadWriter" is invoked
+									is has exactly the same effect as the forwarding method approach; the receiver
+									is the "reader" field of the "ReadWriter", not the "ReadWriter" itself.
 
-						D:
-								Embedding can also be a simple convenience.
-								// Job has now "Log", "Logf" and other methods of *log.Logger
-								type Job struct {
-									Command string
-									*log.Logger
-								}
-									- "Logger" is a regular field of the Job struct. we can initialize it in the usual way
-										inside the constructor for Job. e.g.:
-												func NewJob(command string, logger *log.Logger) *Job {
-													return &Job{command, logger}
-												}
-												// or with a composite literal
-												job := &Job{command, log.New(os.Stderr, "Job: ", log.Ldate)}
-						E:
-								Embedding types introduces the problem of name conflicts, but the rules
-								to resolve them are simple:
-											1. a field or method x hides any other item x in a more deeply nested part
-											of the type. If "log.Logger" contained a field or method named "command"
-											the "command" field of Job would dominate it.
-											2. if the name apears at the same nesting level, its usually an error.
-											itd be erronous to embed "log.Logger" if the struct had another field or
-											method named "Logger".
-											3. however, if the duplicate name is never mentioned in the program outside the
-											type definition is OK.
-											4. theres no problem if a field added that conflicts with another field if neither
-											field is ever used.
+					D:
+							Embedding can also be a simple convenience.
+							// Job has now "Log", "Logf" and other methods of *log.Logger
+							type Job struct {
+								Command string
+								*log.Logger
+						}
+								- "Logger" is a regular field of the Job struct. we can initialize it in the usual way
+									inside the constructor for Job. e.g.:
+											func NewJob(command string, logger *log.Logger) *Job {
+												return &Job{command, logger}
+											}
+											// or with a composite literal
+											job := &Job{command, log.New(os.Stderr, "Job: ", log.Ldate)}
+					E:
+							Embedding types introduces the problem of name conflicts, but the rules
+							to resolve them are simple:
+										1. a field or method x hides any other item x in a more deeply nested part
+										of the type. If "log.Logger" contained a field or method named "command"
+										the "command" field of Job would dominate it.
+										2. if the name apears at the same nesting level, its usually an error.
+										itd be erronous to embed "log.Logger" if the struct had another field or
+										method named "Logger".
+										3. however, if the duplicate name is never mentioned in the program outside the
+										type definition is OK.
+										4. theres no problem if a field added that conflicts with another field if neither
+										field is ever used.
 
 CONCURRENCY:
-						1.
+	1. Share by communicating:
+				- "Do not communicate by sharing memory; instead, share memory by communicating"
+				- "Go's approach to concurrency originates in Hoare's Communicating Sequential Processes (CSP)"
+
+		2. Goroutines:
+				- A function executing concurrently with other goroutines in the same address space.
+				- Allocated in stack space. Start small, so they are cheap, and grow by allocating
+					(and freeing) heap storage as required.
+				- goroutines are multiplexed onto multiple OS threads so they dont block eath other.
+				- Prefix a funtion with "go" to run the call in a new goroutine. when it completes
+					it exists silently (similar to a Unix shell & notation for running a command in the
+					background)
+				- e.g.:
+							go list.Sort() // run list.Sort concurrently dont' wait for it
+
+							// A function literal (closure) can be handy in a goroutine invocation
+							func Announce(message string, delay time.Durarion) {
+								go func() {
+									time.Sleep(delay)
+									fmt.Println(message)
+								}() // Note the parentheses - must call the function
+							}
+				- These examples arent practical because the function above has no way of signaling
+					completion. For that, we need channels.
+
+CHANNELS:
+	1.
+
 
 func main() {
 	fmt.Println("Effective Go")
