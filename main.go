@@ -1,13 +1,5 @@
-package main
+Summary of Effective-Go: https://golang.org/doc/effective_go.html
 
-import (
-	"fmt"
-)
-
-type T struct {
-	name  string // name of the object
-	value int    // its value
-}
 
 COMMENTARY:
 	1. Every package should have a package comment:
@@ -609,31 +601,34 @@ CONCURRENCY:
 				- "Do not communicate by sharing memory; instead, share memory by communicating"
 				- "Go's approach to concurrency originates in Hoare's Communicating Sequential Processes (CSP)"
 
-		2. Goroutines:
-				- A function executing concurrently with other goroutines in the same address space.
-				- Allocated in stack space. Start small, so they are cheap, and grow by allocating
-					(and freeing) heap storage as required.
-				- goroutines are multiplexed onto multiple OS threads so they dont block eath other.
-				- Prefix a funtion with "go" to run the call in a new goroutine. when it completes
-					it exists silently (similar to a Unix shell & notation for running a command in the
-					background)
-				- e.g.:
-							go list.Sort() // run list.Sort concurrently dont' wait for it
+	2. Goroutines:
+			- A function executing concurrently with other goroutines in the same address space.
+			- Allocated in stack space. Start small, so they are cheap, and grow by allocating
+				(and freeing) heap storage as required.
+			- goroutines are multiplexed onto multiple OS threads so they dont block eath other.
+			- Prefix a funtion with "go" to run the call in a new goroutine. when it completes
+				it exists silently (similar to a Unix shell & notation for running a command in the
+				background)
+			- e.g.:
+						go list.Sort() // run list.Sort concurrently dont' wait for it
 
-							// A function literal (closure) can be handy in a goroutine invocation
-							func Announce(message string, delay time.Durarion) {
-								go func() {
-									time.Sleep(delay)
-									fmt.Println(message)
-								}() // Note the parentheses - must call the function
-							}
-				- These examples arent practical because the function above has no way of signaling
-					completion. For that, we need channels.
+						// A function literal (closure) can be handy in a goroutine invocation
+						func Announce(message string, delay time.Durarion) {
+							go func() {
+								time.Sleep(delay)
+								fmt.Println(message)
+							}() // Note the parentheses - must call the function
+						}
+			- These examples arent practical because the function above has no way of signaling
+				completion. For that, we need channels.
 
 CHANNELS:
-	1.
+	1. channels are alloated with "make()". Optional buffer size, default is zero.
+		 ci := make(chan int) // Unbuffered channel of integers
+		 cj := make(chan int, 0) // Unbuffered channel of integers
+		 ck := make(chan *os.File, 100) // Buffered channel of pointers to Files
 
+	2. Unbuffered channels combine "communication" (exchange of a value) with "synchronization"
+		 guaranteeing that 2 calculations (goroutines) are in a known state.
 
-func main() {
-	fmt.Println("Effective Go")
-}
+	3.
