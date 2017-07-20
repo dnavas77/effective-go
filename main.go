@@ -646,20 +646,36 @@ CHANNELS:
 		 - if channel has a buffer, sender blocks only until the value has been copied to
 			 the buffer; if the buffer is full, this means waiting until some receiver has
 			 retrieved a value.
+
 	5. A buffered channel can be used like a semaphore, for instance to limit throughput.
 		 - the capacity of the channel buffer limits the number of simultaneous calls to process.
 
-				 var sem = make(chan int, MaxOutstanding)
+			var sem = make(chan int, MaxOutstanding)
 
-				 func handle(r *Request) {
-					 sem <- 1 	// wait for active queue to drain.
-					 process(r) // May take a long time.
-					 <- sem			// Done; enable next request to run.
-				 }
+			func handle(r *Request) {
+				sem <- 1 	// wait for active queue to drain.
+				process(r) // May take a long time.
+				<- sem			// Done; enable next request to run.
+			}
 
-				 func Serve(queue chan *Request) {
-					 for {
-						 req := <- queue
-						 go handle(req) // Don't wait for handle to finish
-					 }
-				 }
+			func Serve(queue chan *Request) {
+				for req := range queue {
+					sem <- 1
+					go func(req *Request) {
+						process(req)
+						<- sem
+					}(req) // we need to pass it to each closure so it's unique on each loop
+				}
+			}
+
+			- Another approach that manages resources well is to start a fixed number of "handle"
+				goroutines all reading from the request channel. The number of goroutines limits the
+				number of simultaneous calls to "process". This "Serve" function also accepts
+				a channel on which it will be told to exit; after launching the goroutines it blocks
+				receiving from that channel.
+
+					func handle(queue chan *Request) {
+						for r := range queue {
+							process(r)
+						}
+					}
