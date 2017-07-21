@@ -724,4 +724,49 @@ CHANNELS OF CHANNELS:
 			}
 
 PARALLELIZATION:
-			1.
+	1. If a calculation can be broken into separate pieces that can execute independently
+			it can be parallelized, with a channel to signal when each piece completes.
+
+			- lets say we have an expensive operation on a vector of items. and thev value
+				of the operation on each item is independent. e.g.:
+
+				type Vector []float64
+
+				// Apply the operation to v[i], v[i+1] ... v[n-1]
+				func (v Vector) DoSome(i, n int, u Vector, c chan int) {
+					for ; i < n; i++ {
+						v[i] += u.Op(v[i])
+					}
+					c <- 1 // signal that this piece is done
+				}
+
+				// We laucnh the pieces independently in a loop, one per CPU. They can complete
+				// in any order but it doesn't matter; we just count the completion signals by
+				// draining the channel after launching all the goroutines.
+				const numCPU = runtime.NumCPU // 4 CPU cores
+
+				func (v Vector) DoAll(u Vector) {
+					c := make(chan int, numCPU) // Buffering optional but sensible.
+					for i := 0; i < numCPU; i++ {
+						go v.DoSome(i*len(v)/numCPU, (i+1)*len(v)/numCPU, u, c)
+					}
+					// Drain the channel.
+					for i := 0; i < numCPU; i++ {
+						<- c // wait for one task to complete
+					}
+					// All done
+				}
+
+			- theres also runtime.GOMAXPROCS (defaults to runtime.NumCPU) but can be overriden
+				in the shell invironment variable or by calling the function with a positive number.
+				Calling it with zero just queries the value. If we want to honor the users resource
+				request we should write: var numCPU = runtime.GOMAXPROCS(0)
+
+			- Be sure not to confuse the ideas of concurrency-structuring a program as independently
+				executing components --and parallelism--executing calculations in parallel for efficiency
+				on multiple CPUs. Although the concurrency features of Go can make some problems easy to
+				structure as parallel computations, Go is a concurrent language, not a parallel one, and
+				not all parallelization problems fit Go model.
+
+A LEAKY BUFFER:
+	1.
