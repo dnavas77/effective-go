@@ -715,3 +715,13 @@ CHANNELS OF CHANNELS:
 			clientRequests <- request
 			// Wait for response.
 			fmt.Printf("answer: %d\n", <- request.resultChan)
+
+			// On the server side, the handler function is the only thing that changes
+			func handle(queue chan *Request) {
+				for req := range queue {
+					req.resultChan <- req.f(req.args)
+				}
+			}
+
+PARALLELIZATION:
+			1.
